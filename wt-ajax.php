@@ -17,17 +17,19 @@ class WT_Ajax {
 	public function html_form_code() {
 
 		?>
-		<form action="<?php esc_url($_SERVER['REQUEST_URI']); ?>" method="post">
+		<form action="<?php the_permalink() ?>" method="get">
 			<p> Type the post title to search <br />
 				<input id="input-text" type="text" name="input-text" size="40" />
 			</p>
-			<p><input type="submit" name="submit-button" value="Send"/></p>
+			<p><input type="submit" value="Send"/></p>
 		</form>
 		<?php
 
-		if ( isset( $_POST['input-text'] ) ) {
+		if ( isset( $_GET['input-text'] ) ) {
 
-			$input_search_terms = explode( ' ', $_POST['input-text'] );
+			$input_text = sanitize_text_field( $_GET['input-text'] );
+
+			$input_search_terms = explode( ' ', $input_text );
 
 			foreach ( $input_search_terms as $a ) {
 				$b[] = 'post_title LIKE "%' . $a . '%"';
@@ -38,15 +40,16 @@ class WT_Ajax {
 			$table_name = $wpdb->prefix . 'posts';
 			$x = $wpdb->get_col("SELECT id FROM {$table_name} WHERE " . $like_query );
 
+			$paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
+
 			//var_dump($x);
 			$args = array(
 				'post__in' => $x,
 				'post_type' => 'post',
 				'post_status' => 'publish',
-				'posts_per_page' => 5,
+				'posts_per_page' => 2,
+				'paged' => $paged,
 			);
-
-			$paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
 
 			$query = new WP_Query($args);
 			$result = array();
@@ -68,7 +71,8 @@ class WT_Ajax {
 					'base' => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
 					'format' => '?paged=%#%',
 					'current' => max( 1, get_query_var('paged') ),
-					'total' => $query->max_num_pages
+					'total' => $query->max_num_pages,
+					'add_args' => 'input-text=' . $input_text,
 				) );
 
 				wp_reset_postdata();
