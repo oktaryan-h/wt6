@@ -40,9 +40,14 @@ class WT_Ajax {
 			$table_name = $wpdb->prefix . 'posts';
 			$x = $wpdb->get_col("SELECT id FROM {$table_name} WHERE " . $like_query );
 
-			$paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
+			if( is_front_page() ) {
+				$paged = ( get_query_var('page') ) ? get_query_var('page') : 1;
+			}else {
+				$paged = ( get_query_var('paged') ) ? get_query_var('paged') : 1;
+			}
 
-			//var_dump($x);
+			//$paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
+
 			$args = array(
 				'post__in' => $x,
 				'post_type' => 'post',
@@ -70,7 +75,7 @@ class WT_Ajax {
 				echo paginate_links( array(
 					'base' => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
 					'format' => '?paged=%#%',
-					'current' => max( 1, get_query_var('paged') ),
+					'current' => max( 1, $paged ),
 					'total' => $query->max_num_pages,
 					'add_args' => 'input-text=' . $input_text,
 				) );
@@ -85,13 +90,13 @@ class WT_Ajax {
 
 	function ajax_scripts() {
 
-		wp_enqueue_script( 'jquery-ui-css', 
-			'//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' );
+		wp_enqueue_style( 'jquery-ui-css', 
+			'//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css' );
 
 		wp_enqueue_script(
 			'ajax-script',
 			plugins_url( '/js/wt-query.js', __FILE__ ),
-			array( 'jquery', 'jquery-ui-autocomplete', 'jquery-ui-css' ) 
+			array( 'jquery', 'jquery-ui-autocomplete', ) 
 		);
 
 	// in JavaScript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
@@ -104,13 +109,10 @@ class WT_Ajax {
 
 	function ajax_action() {
 
-
-
-		//global $wpdb;
 		if ( isset( $_POST['f'] ) ) {
 
 			$args = array(
-				's' => $_POST['f'],
+				's' => sanitize_text_field( $_POST['f'] ),
 				'post_type' => 'post',
 				'post_status' => 'publish'
 			);
@@ -132,8 +134,6 @@ class WT_Ajax {
 
 			wp_send_json( $result );
 		}
-		//$whateveq += 10;
-		//echo $whateveq;
 		wp_die();
 	}
 

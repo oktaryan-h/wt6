@@ -44,7 +44,7 @@ jQuery( function() {
 					'f' : request.term 
 				},
 				function (data) {
-					response(data).slice(0,3);
+					response(data.slice(0,3));
 				}
 				);
 		},
