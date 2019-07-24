@@ -17,7 +17,7 @@ class WT_Ajax {
 	public function html_form_code() {
 
 		?>
-		<form action="<?php esc_url($_SERVER['REQUEST_URI']); ?>" method="get">
+		<form action="<?php esc_url($_SERVER['REQUEST_URI']); ?>" method="post">
 			<p> Type the post title to search <br />
 				<input id="input-text" type="text" name="input-text" size="40" />
 			</p>
@@ -27,14 +27,20 @@ class WT_Ajax {
 
 		if ( isset( $_POST['input-text'] ) ) {
 
-			//$input_text = sanitize_text_field($_GET['input-text']);
+			$input_search_terms = explode( ' ', $_POST['input-text'] );
 
-			//$is_result = true;
+			foreach ( $input_search_terms as $a ) {
+				$b[] = 'post_title LIKE "%' . $a . '%"';
+			}
+			$like_query = implode( ' OR ', $b);
 
 			global $wpdb;
 			$table_name = $wpdb->prefix . 'posts';
-			$wpdb->get_results($wpdb->prepare("SELECT * FROM {$table_name} WHERE post_title LIKE %s", $_POST['input-text'] ) );
+			$x = $wpdb->get_col("SELECT id FROM {$table_name} WHERE " . $like_query );
+
+			//var_dump($x);
 			$args = array(
+				'post__in' => $x,
 				'post_type' => 'post',
 				'post_status' => 'publish',
 				'posts_per_page' => 5,
